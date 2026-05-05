@@ -1,0 +1,9 @@
+{
+  "name": "android-code-review",
+  "version": "1.0.0",
+  "description": "Claude Code skill untuk review kode Android: cek unused imports, missing unit test ViewModel, dan unused function/variable dari git diff.",
+  "author": {
+    "name": "mahesar iznan",
+    "email": "mahesar.abdillah@sawitpro.com"
+  }
+}
