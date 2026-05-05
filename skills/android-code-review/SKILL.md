@@ -3,8 +3,8 @@ name: android-code-review
 description: >
   Gunakan skill ini untuk review kode Android sebelum PR. Trigger saat user bilang
   "review kode", "cek perubahan", "code review", "cek PR", atau sejenisnya.
-  Skill ini mengecek unused imports, missing unit test untuk ViewModel, dan
-  unused function/variable dari perubahan yang ada.
+  Skill ini mengecek simplifikasi fungsi baru di ViewModel, unused imports,
+  missing unit test untuk ViewModel, dan unused function/variable dari perubahan yang ada.
 ---
 
 # Android Code Review Skill
@@ -21,7 +21,28 @@ Review otomatis untuk perubahan kode Android berdasarkan git diff.
 
 ---
 
-## Phase 1: Cek Unused Imports
+## Phase 1: Cek Simplifikasi Fungsi Baru di ViewModel
+
+Filter file yang berubah — cari yang namanya mengandung `ViewModel.kt`.
+
+Untuk setiap fungsi yang **baru ditambahkan** (baris dengan tanda `+` di diff) di ViewModel, evaluasi apakah fungsi tersebut bisa disederhanakan:
+
+- Fungsi yang bisa diganti dengan expression body (`= ...`) daripada block body `{ return ... }`
+- Logika kondisional bertingkat yang bisa disederhanakan dengan `when`, `takeIf`, `let`, `run`, atau operator Elvis `?:`
+- Fungsi yang hanya meneruskan call ke fungsi lain tanpa transformasi — pertimbangkan apakah fungsi wrapper-nya masih perlu
+- Duplikasi logika antar fungsi baru yang bisa di-extract ke satu fungsi shared
+- Penggunaan `if/else` untuk assignment yang bisa diganti ekspresi langsung
+
+**Aturan:**
+- Hanya simplifikasi fungsi yang **baru ditambahkan**, jangan ubah fungsi lama yang tidak ada di diff
+- Jangan ubah behavior — simplifikasi hanya boleh mengubah bentuk kode, bukan logikanya
+- Ikuti gaya kode yang sudah ada di file tersebut
+
+**Aksi:** Terapkan simplifikasi langsung jika yakin tidak mengubah behavior. Jika ada trade-off readability, tampilkan opsi ke user dan tanya.
+
+---
+
+## Phase 2: Cek Unused Imports
 
 Untuk setiap file `.kt` yang berubah, cek apakah ada import yang tidak lagi
 digunakan setelah perubahan. Fokus pada:
@@ -39,7 +60,7 @@ hapus import tersebut.
 
 ---
 
-## Phase 2: Cek Unit Test untuk ViewModel
+## Phase 3: Cek Unit Test untuk ViewModel
 
 Filter file yang berubah — cari yang namanya mengandung `ViewModel.kt`.
 
@@ -61,7 +82,7 @@ Untuk setiap ViewModel yang berubah:
 
 ---
 
-## Phase 3: Cek Unused Function dan Variable
+## Phase 4: Cek Unused Function dan Variable
 
 Dari diff perubahan, identifikasi kode yang ditambahkan tapi tidak dipakai:
 
@@ -90,6 +111,10 @@ Setelah semua phase selesai, tampilkan ringkasan:
 
 ```
 ## Hasil Code Review
+
+### Simplifikasi Fungsi ViewModel
+- [NamaViewModel]: [deskripsi simplifikasi yang diterapkan]
+- Tidak ada fungsi baru yang perlu disimplifikasi
 
 ### Unused Imports
 - [nama file]: dihapus X import → [nama import]
